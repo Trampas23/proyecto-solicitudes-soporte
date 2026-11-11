@@ -220,7 +220,7 @@ El siguiente es el recorrido de una solicitud desde que el usuario llena el form
 2. **Almacenamiento de la respuesta.** Google Forms guarda la respuesta como una **fila nueva** en la hoja de cálculo vinculada, en la pestaña de respuestas, con una marca temporal.
 3. **Detección.** El nodo **Google Sheets Trigger** del workflow de n8n revisa la hoja aproximadamente cada minuto y detecta la fila nueva (`Row Added`).
 4. **Normalización.** El nodo **Normalizar fila** (`Code`) mapea los encabezados de la hoja (`Nombre completo`, `Correo electrónico`, `Teléfono de contacto`, `Área o departamento`, `Categoría del problema`, `Prioridad de atención`, `Descripción detallada del problema`) a las llaves JSON que espera la API (`nombre`, `correo`, `telefono`, `area`, `categoria`, `prioridad`, `descripcion`), normaliza categorías y prioridades con sus propios alias y genera un `id_externo` estable con la forma `form-<marca temporal>` para que los reintentos no dupliquen registros. La columna adicional `Nivel de afectación` (escala 1 a 5 del formulario) se conserva en la hoja para el dashboard, pero no forma parte del contrato de la API.
-5. **Llamada a la API.** El nodo **Registrar en API** (`HTTP Request`) envía `POST https://api-solicitudes-soporte.onrender.com/api/solicitudes` con `Content-Type: application/json`, el header `X-API-Key` y el cuerpo completo que produjo la normalización. Si el servicio de Render está dormido, esta petición lo despierta (cold start de 50 s o más); el JSON trae timeout de 60 s y la guía de despliegue recomienda subirlo a 90 s.
+5. **Llamada a la API.** El nodo **Registrar en API** (`HTTP Request`) envía `POST https://api-solicitudes-trampas23.onrender.com/api/solicitudes` con `Content-Type: application/json`, el header `X-API-Key` y el cuerpo completo que produjo la normalización. Si el servicio de Render está dormido, esta petición lo despierta (cold start de 50 s o más); el JSON trae timeout de 60 s y la guía de despliegue recomienda subirlo a 90 s.
 6. **Recepción en Render.** Gunicorn recibe la petición HTTPS y la entrega a uno de los 2 workers de Flask; Flask enruta a la función `crear_solicitud()`.
 7. **Autenticación.** El decorador `requiere_api_key` compara el header `X-API-Key` con la variable de entorno `API_KEY` usando `secrets.compare_digest` (tiempo constante). Si falta o no coincide, devuelve `401`.
 8. **Validación.** `utilidades.validar_solicitud()` limpia espacios, valida longitudes, formato de correo y teléfono, y normaliza categoría, prioridad y estado (acepta mayúsculas, minúsculas, sin acentos y alias como `redes`, `urgente`, `cerrada`). Si hay errores, responde `400` con el detalle por campo y el workflow toma la rama de error.
@@ -487,7 +487,7 @@ Los datos de demostración (`database/datos_prueba.sql`) insertan 10 solicitudes
 
 | Aspecto | Definición |
 |---|---|
-| **URL base (producción)** | `https://api-solicitudes-soporte.onrender.com` (Render, región Oregon) |
+| **URL base (producción)** | `https://api-solicitudes-trampas23.onrender.com` (Render, región Oregon) |
 | **URL base (local)** | `http://localhost:5000` |
 | **Formato** | JSON (`Content-Type: application/json`); respuestas con `application/json` y UTF-8 |
 | **Autenticación** | Header `X-API-Key` en `POST` y `PATCH`. Los `GET` son públicos. |
@@ -1027,14 +1027,14 @@ Buenas prácticas aplicadas:
 **Variables para curl (Git Bash / Linux / macOS):**
 
 ```bash
-export API_URL="https://api-solicitudes-soporte.onrender.com"
+export API_URL="https://api-solicitudes-trampas23.onrender.com"
 export API_KEY="<TU_API_KEY>"
 ```
 
 **Variables para PowerShell (Windows):**
 
 ```powershell
-$API_URL = "https://api-solicitudes-soporte.onrender.com"
+$API_URL = "https://api-solicitudes-trampas23.onrender.com"
 $API_KEY = "<TU_API_KEY>"
 $headers = @{ "X-API-Key" = $API_KEY; "Content-Type" = "application/json" }
 ```

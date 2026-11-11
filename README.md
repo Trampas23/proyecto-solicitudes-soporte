@@ -199,7 +199,7 @@ Marca cada casilla antes de avanzar:
 
    | Campo | Valor |
    |---|---|
-   | **Name** | `api-solicitudes-soporte` |
+   | **Name** | `api-solicitudes-trampas23` |
    | **Language / Runtime** | `Python 3` |
    | **Region** | `Oregon (US West)` |
    | **Branch** | `main` |
@@ -230,7 +230,7 @@ Marca cada casilla antes de avanzar:
 
 5. Presiona **Create Web Service** y espera a que el estado sea **Live**
    (la primera vez tarda 2-4 minutos).
-6. Copia la URL pública que aparece arriba: `https://api-solicitudes-soporte.onrender.com`.
+6. Copia la URL pública que aparece arriba: `https://api-solicitudes-trampas23.onrender.com`.
 
 ✅ **Listo cuando:** el servicio está en **Live** y al abrir `TU-URL/health` en el navegador ves `"base_datos": "conectada"`.
 
@@ -247,7 +247,7 @@ Marca cada casilla antes de avanzar:
 En PowerShell (ajusta las dos variables):
 
 ```powershell
-$URL = "https://api-solicitudes-soporte.onrender.com"
+$URL = "https://api-solicitudes-trampas23.onrender.com"
 $API_KEY = "tu-clave-secreta"
 $headers = @{ "X-API-Key" = $API_KEY; "Content-Type" = "application/json" }
 ```
@@ -358,7 +358,7 @@ Luego abre `http://localhost:5678`. Con `npx` (si tienes Node.js): `npx n8n`.
 
 | Qué | Dónde se saca |
 |---|---|
-| `API_URL` = `https://api-solicitudes-soporte.onrender.com` | Fase 3 |
+| `API_URL` = `https://api-solicitudes-trampas23.onrender.com` | Fase 3 |
 | `API_KEY` = tu clave | Fase 3 (la misma del header `X-API-Key`) |
 | `Spreadsheet ID` = `1AbC...` | URL de la hoja (Fase 5) |
 | Hoja / pestaña | `Respuestas de formulario 1` (renómbrala si tu Google está en inglés) |

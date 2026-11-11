@@ -10,7 +10,7 @@ workflow no podrá registrar solicitudes.
 
 | Variable | Ejemplo | De dónde se obtiene |
 |---|---|---|
-| `URL` | `https://api-solicitudes-soporte.onrender.com` | Dashboard de Render, servicio de la API |
+| `URL` | `https://api-solicitudes-trampas23.onrender.com` | Dashboard de Render, servicio de la API |
 | `API_KEY` | `Xb7...` (32+ caracteres) | La que capturaste en Render (variable `API_KEY`) |
 
 > En Render la URL la ves arriba del servicio: *"https://<nombre>.onrender.com"*.
@@ -19,7 +19,7 @@ workflow no podrá registrar solicitudes.
 ### PowerShell (Windows) — recomendado
 
 ```powershell
-$URL = "https://api-solicitudes-soporte.onrender.com"
+$URL = "https://api-solicitudes-trampas23.onrender.com"
 $API_KEY = "tu-clave-secreta"
 $headers = @{ "X-API-Key" = $API_KEY; "Content-Type" = "application/json" }
 ```
@@ -27,7 +27,7 @@ $headers = @{ "X-API-Key" = $API_KEY; "Content-Type" = "application/json" }
 ### CMD / Git Bash / Mac / Linux (curl)
 
 ```bash
-export URL="https://api-solicitudes-soporte.onrender.com"
+export URL="https://api-solicitudes-trampas23.onrender.com"
 export API_KEY="tu-clave-secreta"
 ```
 

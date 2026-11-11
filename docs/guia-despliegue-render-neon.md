@@ -102,7 +102,7 @@ Dos datos importantes de la estructura:
 | Recurso | URL / valor | Se obtiene en |
 |---|---|---|
 | Repositorio GitHub | `https://github.com/<TU_USUARIO>/proyecto-solicitudes` | Fase 2 |
-| API en Render | `https://api-solicitudes-soporte.onrender.com` | Fase 3 |
+| API en Render | `https://api-solicitudes-trampas23.onrender.com` | Fase 3 |
 | Base de datos (host pooled) | `ep-xxxx-pooler.us-west-2.aws.neon.tech` | Fase 1 |
 | Workflow n8n | `https://<SUBDOMINIO>.app.n8n.cloud` | Fase 4 |
 | Formulario Google | `https://forms.gle/...` | Guía de Google Forms |
@@ -521,7 +521,7 @@ El repositorio ya trae `render.yaml` en la raíz, con el servicio declarado y pr
 1. En el panel de Render haz clic en **New +** (arriba a la derecha) → **Blueprint**.
 2. En **Git Provider** elige **GitHub** (si es la primera vez, autoriza el acceso). Busca y selecciona el repositorio `proyecto-solicitudes` y haz clic en **Connect**.
 3. Render lee `render.yaml` y muestra una vista previa con el servicio declarado:
-   - **Nombre:** `api-solicitudes-soporte` (determina la URL pública).
+   - **Nombre:** `api-solicitudes-trampas23` (determina la URL pública).
    - **Runtime:** Python 3, **Región:** Oregon, **Plan:** Free.
    - **Root Directory:** `backend`.
    - **Build Command:** `pip install -r requirements.txt`.
@@ -550,7 +550,7 @@ Si prefieres capturar todo a mano (útil para entender cada campo):
 
 | Campo | Valor |
 |---|---|
-| **Name** | `api-solicitudes-soporte` |
+| **Name** | `api-solicitudes-trampas23` |
 | **Language / Runtime** | `Python 3` |
 | **Region** | `Oregon (US West)` |
 | **Branch** | `main` |
@@ -590,16 +590,16 @@ Si prefieres capturar todo a mano (útil para entender cada campo):
 [INFO] Booting worker with pid: ...
 ```
 
-3. Cuando el estado del servicio cambie a **Live** (punto verde), la URL pública aparece en la parte superior, con la forma `https://api-solicitudes-soporte.onrender.com`. **Cópiala**: será `API_URL` en lo que resta de la guía.
+3. Cuando el estado del servicio cambie a **Live** (punto verde), la URL pública aparece en la parte superior, con la forma `https://api-solicitudes-trampas23.onrender.com`. **Cópiala**: será `API_URL` en lo que resta de la guía.
 
-> Render puede agregar un sufijo aleatorio si el nombre ya está ocupado (por ejemplo `api-solicitudes-soporte-x7k2.onrender.com`). Usa la URL exacta que muestre el panel.
+> Render puede agregar un sufijo aleatorio si el nombre ya está ocupado (por ejemplo `api-solicitudes-trampas23-x7k2.onrender.com`). Usa la URL exacta que muestre el panel.
 
 ### 3.6 Verificar `/health` y los endpoints con curl
 
 Abre **Git Bash** (recomendado para que los comandos coincidan con esta guía) y define las variables de tu sesión:
 
 ```bash
-export API_URL="https://api-solicitudes-soporte.onrender.com"
+export API_URL="https://api-solicitudes-trampas23.onrender.com"
 export API_KEY="<TU_API_KEY>"
 ```
 
@@ -792,7 +792,7 @@ Cada `git push` a la rama `main` dispara un nuevo despliegue porque `autoDeploy:
 
 ### Verificación de la fase 3
 
-- [ ] Servicio `api-solicitudes-soporte` creado (Blueprint o manual) con **Root Directory** = `backend`, runtime Python 3 y plan Free.
+- [ ] Servicio `api-solicitudes-trampas23` creado (Blueprint o manual) con **Root Directory** = `backend`, runtime Python 3 y plan Free.
 - [ ] Build Command `pip install -r requirements.txt` y Start Command `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60` configurados.
 - [ ] Variables `DATABASE_URL` (pooled, con `sslmode=require`) y `API_KEY` cargadas; `PORT` **no** agregada manualmente.
 - [ ] Health Check Path = `/health` y el servicio está en estado **Live**.
@@ -985,7 +985,7 @@ Al importar el workflow verás una nota **Configuración** y diez nodos. Los nom
 **4) Registrar en API (HTTP Request):**
 
 - **Method:** `POST`.
-- **URL:** `https://api-solicitudes-soporte.onrender.com/api/solicitudes` (reemplaza el valor de ejemplo `https://TU-SERVICIO.onrender.com/api/solicitudes`).
+- **URL:** `https://api-solicitudes-trampas23.onrender.com/api/solicitudes` (reemplaza el valor de ejemplo `https://TU-SERVICIO.onrender.com/api/solicitudes`).
 - **Headers:** conserva `Content-Type: application/json` y reemplaza `TU-API-KEY-AQUI` por tu API key de la fase 3.
 - **Body:** tipo JSON con la expresión `={{ JSON.stringify($json) }}`. No la cambies: envía el objeto que produjo **Normalizar fila**.
 - **Settings → Timeout:** el JSON trae `60000` ms; súbelo a `90000` ms para tolerar el cold start de Render.
@@ -1109,7 +1109,7 @@ Guarda capturas de pantalla con fecha visible en una carpeta `evidencias/` (sin 
 | Entregable | Dónde se verifica | Criterio de aceptación | Listo |
 |---|---|---|---|
 | Código fuente en GitHub | `https://github.com/<TU_USUARIO>/proyecto-solicitudes` | Repositorio con `backend/`, `database/`, `n8n/`, `docs/`, `render.yaml` y README; sin secretos | [ ] |
-| API en Render | `https://api-solicitudes-soporte.onrender.com` | Servicio **Live**, `/health` con `"base_datos": "conectada"`, endpoints funcionando | [ ] |
+| API en Render | `https://api-solicitudes-trampas23.onrender.com` | Servicio **Live**, `/health` con `"base_datos": "conectada"`, endpoints funcionando | [ ] |
 | Base de datos en Neon | Consola de Neon | Tabla `solicitudes`, triggers, índices y tres vistas creados; solicitudes de prueba | [ ] |
 | Workflow n8n exportado | `n8n/workflow-solicitudes.json` en GitHub | JSON importable, con credenciales y URL documentadas (sin llaves reales en el JSON) | [ ] |
 | Google Forms | Enlace `forms.gle/...` compartido | Preguntas, obligatoriedad y respuestas vinculadas a Sheets | [ ] |
@@ -1324,7 +1324,7 @@ SELECT setval(
 
 | Variable | Valor final |
 |---|---|
-| `API_URL` (Render) | `https://api-solicitudes-soporte.onrender.com` |
+| `API_URL` (Render) | `https://api-solicitudes-trampas23.onrender.com` |
 | `API_KEY` | `________________________________________` (guardar en gestor de contraseñas) |
 | `DATABASE_URL` pooled | `postgresql://neondb_owner:________@ep-____-pooler.________.aws.neon.tech/neondb?sslmode=require` |
 | Host directo de Neon | `ep-________.________.aws.neon.tech` |
