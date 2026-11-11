@@ -1,0 +1,544 @@
+{
+  "name": "Solicitudes de soporte técnico · Form → API Flask → Folio",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ⚙️ Configuración antes de activar\n\n1. **Google Sheets Trigger** y **Escribir folio en la hoja**: reemplaza `PEGA_AQUI_EL_ID_DEL_SPREADSHEET` por el ID del spreadsheet y, si tu pestaña se llama distinto, elige la hoja `Respuestas de formulario 1`.\n2. **Registrar en API**: cambia la URL de Render y el header `X-API-Key`.\n3. **Alerta al administrador**: cambia `soporte-admin@ejemplo.com` por el correo real.\n4. Asigna las credenciales **OAuth2 de Google** (Sheets y Gmail) al importar el workflow.\n5. Activa el workflow con el interruptor **Active**.\n\n📘 Pasos completos: `proyecto-solicitudes/docs/guia-google-forms-sheets.md`",
+        "height": 340,
+        "width": 620,
+        "color": 4
+      },
+      "id": "7c1f0a2e-4b3d-4e5f-8a9b-0c1d2e3f4a01",
+      "name": "Configuración",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -620
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "triggerOAuth2",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PEGA_AQUI_EL_ID_DEL_SPREADSHEET"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Respuestas de formulario 1",
+          "cachedResultName": "Respuestas de formulario 1"
+        },
+        "event": "rowAdded",
+        "options": {
+          "valueRender": "UNFORMATTED_VALUE",
+          "dateTimeRenderOption": "FORMATTED_STRING"
+        }
+      },
+      "id": "8d2a1b3f-5c4e-4f60-9b1c-2d3e4f5a6b02",
+      "name": "Google Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "REEMPLAZA_ID_DE_CREDENCIAL",
+          "name": "Google Sheets Trigger OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/**\n * Normaliza la fila que entrega el Google Sheets Trigger (respuestas del Form)\n * y construye el JSON que espera la API Flask desplegada en Render.\n *\n * Columnas del formulario -> campos de la API:\n *   Nombre completo                      -> nombre\n *   Correo electrónico                   -> correo\n *   Teléfono de contacto                 -> telefono\n *   Área o departamento                  -> area\n *   Categoría del problema               -> categoria\n *   Prioridad de atención                -> prioridad\n *   Descripción detallada del problema   -> descripcion\n *   (Marca temporal)                     -> id_externo (\"form-\" + slug de la fecha)\n */\n\n// Columnas del formulario -> campos de la API\nconst COLUMNAS = {\n  nombre: 'Nombre completo',\n  correo: 'Correo electrónico',\n  telefono: 'Teléfono de contacto',\n  area: 'Área o departamento',\n  categoria: 'Categoría del problema',\n  prioridad: 'Prioridad de atención',\n  descripcion: 'Descripción detallada del problema',\n};\n\n// Valores canónicos que exige la API (database/schema.sql)\nconst CATEGORIAS = ['Hardware', 'Software', 'Redes e Internet', 'Accesos y contraseñas', 'Impresoras', 'Otro'];\nconst PRIORIDADES = ['Baja', 'Media', 'Alta', 'Crítica'];\n\n// Sinónimos frecuentes escritos por el usuario final\nconst ALIAS_CATEGORIA = {\n  redes: 'Redes e Internet',\n  red: 'Redes e Internet',\n  internet: 'Redes e Internet',\n  wifi: 'Redes e Internet',\n  accesos: 'Accesos y contraseñas',\n  acceso: 'Accesos y contraseñas',\n  contrasenas: 'Accesos y contraseñas',\n  impresora: 'Impresoras',\n  impresion: 'Impresoras',\n  equipo: 'Hardware',\n  equipos: 'Hardware',\n  pc: 'Hardware',\n  programa: 'Software',\n  programas: 'Software',\n  sistema: 'Software',\n};\n\nconst ALIAS_PRIORIDAD = {\n  bajo: 'Baja',\n  media: 'Media',\n  medio: 'Media',\n  normal: 'Media',\n  alto: 'Alta',\n  critica: 'Crítica',\n  critico: 'Crítica',\n  urgente: 'Crítica',\n  inmediata: 'Crítica',\n};\n\n// Texto comparable: sin acentos, en minúsculas y con espacios simples.\nconst comparables = (valor) =>\n  String(valor === undefined || valor === null ? '' : valor)\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .toLowerCase()\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n// Texto limpio: recorta y colapsa espacios (nunca regresa undefined).\nconst texto = (valor) =>\n  String(valor === undefined || valor === null ? '' : valor)\n    .replace(/\\s+/g, ' ')\n    .trim();\n\n// Convierte la respuesta del formulario al valor canónico de la API.\nconst normalizar = (valor, catalogo, alias, porDefecto) => {\n  const clave = comparables(valor);\n  if (!clave) return porDefecto;\n  for (const opcion of catalogo) {\n    if (comparables(opcion) === clave) return opcion;\n  }\n  if (alias[clave]) return alias[clave];\n  return porDefecto;\n};\n\nconst slug = (valor) => texto(valor).replace(/[^0-9A-Za-z]/g, '');\n\nconst salida = [];\n\nfor (const item of $input.all()) {\n  const fila = item.json || {};\n  const marcaTemporal = texto(fila['Marca temporal']);\n\n  // Idempotencia: id_externo estable ante reintentos del workflow.\n  // El trigger \"Row Added\" no expone row_number, por lo que se usa la\n  // Marca temporal (única por respuesta) si no viene el número de fila.\n  const numeroFila = fila.row_number !== undefined ? fila.row_number : null;\n  const idExterno = numeroFila\n    ? 'form-' + numeroFila\n    : 'form-' + (slug(marcaTemporal) || 'sin-fecha');\n\n  salida.push({\n    json: {\n      nombre: texto(fila[COLUMNAS.nombre]),\n      correo: texto(fila[COLUMNAS.correo]).toLowerCase(),\n      telefono: texto(fila[COLUMNAS.telefono]) || null,\n      area: texto(fila[COLUMNAS.area]) || null,\n      categoria: normalizar(fila[COLUMNAS.categoria], CATEGORIAS, ALIAS_CATEGORIA, 'Otro'),\n      prioridad: normalizar(fila[COLUMNAS.prioridad], PRIORIDADES, ALIAS_PRIORIDAD, 'Media'),\n      descripcion: texto(fila[COLUMNAS.descripcion]),\n      id_externo: idExterno,\n    },\n  });\n}\n\nreturn salida;"
+      },
+      "id": "9e3b2c4a-6d5f-4061-8c2d-3e4f5a6b7c03",
+      "name": "Normalizar fila",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://TU-SERVICIO.onrender.com/api/solicitudes",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-API-Key",
+              "value": "TU-API-KEY-AQUI"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "af4c3d5b-7e60-4172-9d3e-4f5a6b7c8d04",
+      "name": "Registrar en API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2a1b0c4d-3e5f-4a61-9b72-8c3d4e5f6a11",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "3b2c1d5e-4f60-4b72-8c83-9d4e5f6a7b12",
+              "leftValue": "={{ $json.data ? $json.data.folio : '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b05d4e6c-8f71-4283-8e4f-5a6b7c8d9e05",
+      "name": "¿Respuesta OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4c3d2e6f-5a71-4c83-9d94-0e5f6a7b8c13",
+              "leftValue": "={{ $json.duplicado === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c16e5f7d-9082-4394-9f50-6b7c8d9eaf06",
+      "name": "¿Ya estaba registrada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        960,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.data.correo }}",
+        "subject": "=✅ Solicitud {{ $json.data.folio }} registrada · Soporte técnico",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html lang=\"es\">\n  <body style=\"margin:0;padding:24px;background:#eef2f9;font-family:Arial,Helvetica,sans-serif;color:#1f2937;\">\n    <div style=\"max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #dbe3ef;border-radius:12px;overflow:hidden;\">\n      <div style=\"background:#1d4ed8;padding:20px 24px;\">\n        <h1 style=\"margin:0;font-size:20px;color:#ffffff;\">Soporte técnico · Solicitud registrada</h1>\n      </div>\n      <div style=\"padding:24px;\">\n        <p style=\"margin:0 0 12px;\">Hola <strong>{{ $json.data.nombre }}</strong>,</p>\n        <p style=\"margin:0 0 20px;\">Recibimos tu solicitud y quedó registrada en el sistema. Guarda el folio para dar seguimiento.</p>\n        <table style=\"width:100%;border-collapse:collapse;font-size:14px;\">\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;width:45%;\">Folio</td>\n            <td style=\"padding:6px 0;font-weight:bold;font-size:16px;color:#1d4ed8;\">{{ $json.data.folio }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Categoría</td>\n            <td style=\"padding:6px 0;\">{{ $json.data.categoria }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Prioridad</td>\n            <td style=\"padding:6px 0;\">{{ $json.data.prioridad }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Estado</td>\n            <td style=\"padding:6px 0;\">{{ $json.data.estado }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Fecha de registro</td>\n            <td style=\"padding:6px 0;\">{{ $json.data.fecha_registro }}</td>\n          </tr>\n        </table>\n        <h2 style=\"font-size:15px;margin:24px 0 8px;\">Resumen de tu solicitud</h2>\n        <p style=\"margin:0;padding:12px;background:#f8fafc;border-left:4px solid #1d4ed8;white-space:pre-wrap;\">{{ $json.data.descripcion }}</p>\n        <p style=\"margin:24px 0 0;font-size:12px;color:#6b7280;\">Este correo se generó automáticamente con n8n; no respondas a este mensaje.</p>\n      </div>\n    </div>\n  </body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d27f608e-a193-44a5-8061-7c8d9eafb007",
+      "name": "Correo al solicitante",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1200,
+        -100
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZA_ID_DE_CREDENCIAL",
+          "name": "Gmail account OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "sheet",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PEGA_AQUI_EL_ID_DEL_SPREADSHEET"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Respuestas de formulario 1",
+          "cachedResultName": "Respuestas de formulario 1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Marca temporal": "={{ $('Google Sheets Trigger').first().json['Marca temporal'] }}",
+            "Folio": "={{ $('Registrar en API').first().json.data.folio }}",
+            "Estado": "={{ $('Registrar en API').first().json.data.estado }}",
+            "Fecha de registro": "={{ $('Registrar en API').first().json.data.fecha_registro }}",
+            "Correo enviado": "Sí"
+          },
+          "matchingColumns": [
+            "Marca temporal"
+          ],
+          "schema": [
+            {
+              "id": "Marca temporal",
+              "displayName": "Marca temporal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre completo",
+              "displayName": "Nombre completo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correo electrónico",
+              "displayName": "Correo electrónico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Teléfono de contacto",
+              "displayName": "Teléfono de contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Área o departamento",
+              "displayName": "Área o departamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoría del problema",
+              "displayName": "Categoría del problema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Prioridad de atención",
+              "displayName": "Prioridad de atención",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nivel de afectación",
+              "displayName": "Nivel de afectación",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descripción detallada del problema",
+              "displayName": "Descripción detallada del problema",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Folio",
+              "displayName": "Folio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fecha de registro",
+              "displayName": "Fecha de registro",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Correo enviado",
+              "displayName": "Correo enviado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e380719f-b2a4-45b6-9172-8d9eafb0c108",
+      "name": "Escribir folio en la hoja",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        -100
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REEMPLAZA_ID_DE_CREDENCIAL",
+          "name": "Google Sheets account OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "f49182a0-c3b5-46c7-a283-9eafb0c1d209",
+      "name": "Duplicado: no reenviar",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "soporte-admin@ejemplo.com",
+        "subject": "=⚠️ Error al registrar una solicitud de soporte",
+        "emailType": "html",
+        "message": "<!DOCTYPE html>\n<html lang=\"es\">\n  <body style=\"margin:0;padding:24px;background:#fef2f2;font-family:Arial,Helvetica,sans-serif;color:#1f2937;\">\n    <div style=\"max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #fecaca;border-radius:12px;overflow:hidden;\">\n      <div style=\"background:#b91c1c;padding:20px 24px;\">\n        <h1 style=\"margin:0;font-size:20px;color:#ffffff;\">⚠️ No se pudo registrar una solicitud</h1>\n      </div>\n      <div style=\"padding:24px;\">\n        <p style=\"margin:0 0 16px;\">El workflow <strong>Solicitudes de soporte técnico</strong> no pudo registrar la solicitud en la API de Render.</p>\n        <table style=\"width:100%;border-collapse:collapse;font-size:14px;\">\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;width:32%;\">Motivo reportado</td>\n            <td style=\"padding:6px 0;font-weight:bold;color:#b91c1c;\">{{ $json.mensaje || $json.message || (typeof $json.error === 'string' ? $json.error : JSON.stringify($json.error)) || 'Revisa la ejecución en n8n' }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Solicitante</td>\n            <td style=\"padding:6px 0;\">{{ $('Normalizar fila').first().json.nombre }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Correo</td>\n            <td style=\"padding:6px 0;\">{{ $('Normalizar fila').first().json.correo }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Categoría / Prioridad</td>\n            <td style=\"padding:6px 0;\">{{ $('Normalizar fila').first().json.categoria }} / {{ $('Normalizar fila').first().json.prioridad }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding:6px 0;color:#6b7280;\">Fecha del aviso</td>\n            <td style=\"padding:6px 0;\">{{ $now.format('yyyy-LL-dd HH:mm:ss') }} (America/Mexico_City)</td>\n          </tr>\n        </table>\n        <h2 style=\"font-size:14px;margin:24px 0 8px;\">Cuerpo enviado a la API</h2>\n        <pre style=\"margin:0;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;white-space:pre-wrap;\">{{ JSON.stringify($('Normalizar fila').first().json, null, 2) }}</pre>\n        <h2 style=\"font-size:14px;margin:16px 0 8px;\">Respuesta / error de la API</h2>\n        <pre style=\"margin:0;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;white-space:pre-wrap;\">{{ JSON.stringify($json, null, 2) }}</pre>\n        <p style=\"margin:24px 0 0;font-size:12px;color:#6b7280;\">Revisa la ejecución en n8n (pestaña Executions) y vuelve a ejecutar el workflow cuando el servicio esté disponible.</p>\n      </div>\n    </div>\n  </body>\n</html>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "05a293b1-d4c6-47d8-b394-afb0c1d2e30a",
+      "name": "Alerta al administrador",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        220
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZA_ID_DE_CREDENCIAL",
+          "name": "Gmail account OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "errorType": "errorMessage",
+        "errorMessage": "La API no registró la solicitud (folio no generado). Revisa el correo de alerta enviado al administrador y la ejecución en n8n."
+      },
+      "id": "16b3a4c2-e5d7-48e9-c4a5-b0c1d2e3f40b",
+      "name": "Detener con error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalizar fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar fila": {
+      "main": [
+        [
+          {
+            "node": "Registrar en API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en API": {
+      "main": [
+        [
+          {
+            "node": "¿Respuesta OK?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alerta al administrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Respuesta OK?": {
+      "main": [
+        [
+          {
+            "node": "¿Ya estaba registrada?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alerta al administrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Ya estaba registrada?": {
+      "main": [
+        [
+          {
+            "node": "Duplicado: no reenviar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Correo al solicitante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Correo al solicitante": {
+      "main": [
+        [
+          {
+            "node": "Escribir folio en la hoja",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alerta al administrador": {
+      "main": [
+        [
+          {
+            "node": "Detener con error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Mexico_City",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "active": false,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

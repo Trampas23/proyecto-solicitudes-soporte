@@ -1,0 +1,23 @@
+# Entorno de Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.deps/
+
+# Variables de entorno (NUNCA subir credenciales al repositorio)
+.env
+.env.local
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Resultados de pruebas
+.pytest_cache/
+.coverage
+htmlcov/

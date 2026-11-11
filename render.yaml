@@ -1,0 +1,41 @@
+# =============================================================================
+#  Render Blueprint - despliegue automático de la API
+#  Archivo: render.yaml (debe estar en la RAÍZ del repositorio)
+#
+#  Uso:
+#    1. Sube el repositorio a GitHub.
+#    2. En Render: New -> Blueprint -> selecciona el repositorio.
+#    3. Render detecta este archivo y crea el servicio.
+#    4. En "Environment" captura DATABASE_URL y API_KEY (sync: false),
+#       y presiona "Save, rebuild, and deploy".
+#
+#  Alternativa manual (sin Blueprint): New -> Web Service, y captura a mano:
+#    Root Directory : backend
+#    Build Command  : pip install -r requirements.txt
+#    Start Command  : gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+#    Health Check   : /health
+# =============================================================================
+services:
+  - type: web
+    name: api-solicitudes-soporte
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # IMPORTANTE: fija Python 3.12.6. Si se omite, Render usa por defecto
+      # Python 3.14, donde psycopg2-binary==2.9.10 no tiene wheel precompilado
+      # y la instalación falla. También está backend/.python-version.
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      # Se capturan manualmente en el dashboard de Render (no se versionan):
+      - key: DATABASE_URL
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
