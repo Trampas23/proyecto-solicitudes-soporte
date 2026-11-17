@@ -27,6 +27,8 @@
 > ⚠️ El workflow de n8n **debe estar ejecutándose** (contenedor Docker encendido) para
 > procesar las respuestas nuevas. Las capturas de evidencia se guardan en `docs/capturas/`.
 
+📄 **Documento para entregar:** [`docs/documentacion-tecnica.pdf`](docs/documentacion-tecnica.pdf) (con portada institucional y evidencias fotográficas).
+
 
 ## Índice
 
@@ -602,3 +604,4 @@ Toma estas capturas (te ahorran puntos en la documentación):
 **Nota académica:** este proyecto es una plantilla funcional de referencia.
 Personaliza la documentación, entiende cada parte del flujo (te pueden preguntar
 en la presentación) y cita este repositorio si lo usas como base.
+

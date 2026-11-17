@@ -7,12 +7,12 @@
 | **Título del documento** | Documentación técnica del sistema |
 | **Materia** | Programación en ambiente cliente servidor |
 | **Proyecto** | Sistema automatizado de gestión de solicitudes de soporte técnico (segundo parcial) |
-| **Autor** | Ailton Antonio |
-| **Matrícula** | [escribe tu matrícula] |
-| **Grupo** | [escribe tu grupo] |
-| **Profesor** | ______________________________ |
-| **Institución** | ______________________________ |
-| **Fecha** | Noviembre de 2026 |
+| **Autor** | Ailton Antonio Antonio |
+| **Matrícula** | 2023330968 |
+| **Grupo** | 703 |
+| **Profesor** | Ing. Alex Ramírez Galindo |
+| **Institución** | Tecnológico de Estudios Superiores de San Felipe del Progreso (TESSPP) |
+| **Fecha** | 17 de noviembre de 2026 |
 | **Versión del documento** | 1.0 |
 | **Versión del sistema** | 1.0.0 |
 
@@ -40,6 +40,9 @@
 10. [Mejoras futuras](#10-mejoras-futuras)
 11. [Referencias](#11-referencias)
 12. [Apéndices](#12-apéndices)
+13. [Anexo D — Dashboard en Google Sheets](#anexo-d--dashboard-en-google-sheets-requisito-7)
+14. [Anexo E — Evidencias del funcionamiento](#anexo-e--evidencias-del-funcionamiento)
+15. [Anexo F — Evidencias fotográficas](#anexo-f--evidencias-fotográficas)
 
 ---
 
@@ -1556,3 +1559,62 @@ Las capturas se almacenan en la carpeta `docs/capturas/` del repositorio.
 
 Con estas evidencias queda demostrado el flujo completo:
 **Google Forms → Google Sheets → n8n → API Flask en Render → PostgreSQL en Neon → Gmail → dashboard**.
+
+---
+
+# Anexo F — Evidencias fotográficas
+
+Las siguientes capturas muestran el sistema en funcionamiento y corresponden a la entrega final del proyecto.
+
+<figure>
+  <img src="capturas/01-neon-tabla-solicitudes.png" alt="Tabla solicitudes en Neon con los folios generados automáticamente por el trigger de la base de datos.">
+  <figcaption><strong>Figura 1.</strong> Tabla <code>solicitudes</code> en Neon con los folios generados automáticamente por el trigger de la base de datos.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/02-render-servicio-live.png" alt="Servicio de la API REST desplegado en Render, en estado Live.">
+  <figcaption><strong>Figura 2.</strong> Servicio de la API REST desplegado en Render, en estado <strong>Live</strong>.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/03-health-conectada.png" alt="Respuesta de GET /health con "base_datos": "conectada".">
+  <figcaption><strong>Figura 3.</strong> Respuesta de <code>GET /health</code> con <code>"base_datos": "conectada"</code>.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/04-pruebas-api.png" alt="Pruebas de la API: registro de una solicitud con folio, consulta de solicitudes y estadísticas.">
+  <figcaption><strong>Figura 4.</strong> Pruebas de la API: registro de una solicitud con folio, consulta de solicitudes y estadísticas.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/05-google-form-envio.png" alt="Confirmación del envío de una solicitud desde el Google Forms.">
+  <figcaption><strong>Figura 5.</strong> Confirmación del envío de una solicitud desde el Google Forms.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/06-hoja-respuestas.png" alt="Hoja Respuestas de formulario 1 vinculada al formulario, con los encabezados A–M.">
+  <figcaption><strong>Figura 6.</strong> Hoja <code>Respuestas de formulario 1</code> vinculada al formulario, con los encabezados A–M.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/07-hoja-folios-n8n.png" alt="Columnas J–M completadas por n8n: folio, estado, fecha de registro y correo enviado.">
+  <figcaption><strong>Figura 7.</strong> Columnas J–M completadas por n8n: folio, estado, fecha de registro y correo enviado.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/08-n8n-ejecucion.png" alt="Workflow de n8n publicado y ejecutado correctamente: todos los nodos en verde.">
+  <figcaption><strong>Figura 8.</strong> Workflow de n8n publicado y ejecutado correctamente: todos los nodos en verde.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/09-gmail-folio.png" alt="Correo de notificación enviado al solicitante con el folio de seguimiento.">
+  <figcaption><strong>Figura 9.</strong> Correo de notificación enviado al solicitante con el folio de seguimiento.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/10-dashboard.png" alt="Pestaña Dashboard con los indicadores y las tablas de solicitudes por categoría y prioridad.">
+  <figcaption><strong>Figura 10.</strong> Pestaña <code>Dashboard</code> con los indicadores y las tablas de solicitudes por categoría y prioridad.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/11-credencial-oauth.png" alt="Credencial OAuth 2.0 de Google Sheets conectada en n8n.">
+  <figcaption><strong>Figura 11.</strong> Credencial OAuth 2.0 de Google Sheets conectada en n8n.</figcaption>
+</figure>
+<figure>
+  <img src="capturas/12-github-repo.png" alt="Repositorio del proyecto en GitHub con el código fuente y la documentación.">
+  <figcaption><strong>Figura 12.</strong> Repositorio del proyecto en GitHub con el código fuente y la documentación.</figcaption>
+</figure>
+<figure>
+  <img src="diagrama-workflow-n8n.png" alt="Diagrama del workflow de n8n">
+  <figcaption><strong>Figura 13.</strong> Diagrama del workflow de n8n: disparador de Google Sheets, normalización, llamada a la API, envío de correo y escritura del folio en la hoja.</figcaption>
+</figure>
