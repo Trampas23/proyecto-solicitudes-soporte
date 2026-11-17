@@ -37,12 +37,8 @@
 7. [Seguridad](#7-seguridad)
 8. [Pruebas](#8-pruebas)
 9. [Conclusiones](#9-conclusiones)
-10. [Mejoras futuras](#10-mejoras-futuras)
-11. [Referencias](#11-referencias)
-12. [Apéndices](#12-apéndices)
-13. [Anexo D — Dashboard en Google Sheets](#anexo-d--dashboard-en-google-sheets-requisito-7)
-14. [Anexo E — Evidencias del funcionamiento](#anexo-e--evidencias-del-funcionamiento)
-15. [Anexo F — Evidencias fotográficas](#anexo-f--evidencias-fotográficas)
+10. [Anexo D — Dashboard en Google Sheets](#anexo-d--dashboard-en-google-sheets-requisito-7)
+11. [Anexo E — Evidencias fotográficas](#anexo-e--evidencias-fotográficas)
 
 ---
 
@@ -480,7 +476,7 @@ Representación JSON tal como la devuelve la API (`data` de `POST`, `GET` o `PAT
 
 ### 5.8 Esquema SQL completo
 
-El script `database/schema.sql` es **idempotente** (se puede ejecutar más de una vez sin perder datos) y está diseñado para pegarse completo en el **SQL Editor** de Neon. Su contenido íntegro se reproduce en el [Apéndice C](#apéndice-c-esquema-sql-completo-databaseschemasql).
+El script `database/schema.sql` es **idempotente** (se puede ejecutar más de una vez sin perder datos) y está diseñado para pegarse completo en el **SQL Editor** de Neon. Su contenido íntegro está disponible en el archivo `database/schema.sql` del repositorio.
 
 Los datos de demostración (`database/datos_prueba.sql`) insertan 10 solicitudes con `id_externo` `demo-001` a `demo-010`, estados variados y fechas retroactivas; también es idempotente gracias a `ON CONFLICT (id_externo) DO NOTHING`.
 
@@ -959,7 +955,7 @@ curl -s "$API_URL/api/estadisticas"
 - **Longitud recomendada:** al menos 32 caracteres aleatorios generados con `python -c "import secrets; print(secrets.token_urlsafe(32))"`.
 - **Manejo de la llave:** se captura en Render (variable de entorno) y en n8n (header del nodo HTTP). No se versiona en el repositorio; el JSON del workflow debe usar un marcador (`<API_KEY>`) y configurarse a mano en n8n.
 - **Respuesta de rechazo:** `401` con un mensaje que no revela la llave esperada ni detalles internos.
-- **Limitación aceptada:** una sola llave compartida; no identifica usuarios ni permite roles (ver mejoras futuras).
+- **Limitación aceptada:** una sola llave compartida; no identifica usuarios ni permite roles.
 
 ### 7.2 Cifrado en tránsito (SSL/TLS)
 
@@ -1189,304 +1185,6 @@ En conjunto, el sistema demuestra un flujo completo *formulario → automatizaci
 
 ---
 
-## 10. Mejoras futuras
-
-| Prioridad | Mejora | Beneficio | Complejidad |
-|---|---|---|---|
-| Alta | **Autenticación de usuarios y roles** (JWT o sesiones) con tabla `usuarios` y permisos (`solicitante`, `técnico`, `administrador`) | Elimina la llave compartida y permite saber quién consulta y quién cambia estados | Media |
-| Alta | **Proteger los `GET`** con API key, token o proxy autenticado | Evita exponer nombres, correos y descripciones a cualquiera con la URL | Baja |
-| Alta | **Rate limiting** con Flask-Limiter o en el proxy de Render | Mitiga abuso y fuerza bruta de la llave | Baja |
-| Alta | **Auditoría de cambios** (`historial_estados`: solicitud, estado anterior, estado nuevo, usuario, fecha) | Trazabilidad completa del ciclo de atención | Media |
-| Alta | **Migraciones automáticas** (Alembic o Flyway) en lugar de ejecutar `schema.sql` a mano | Despliegues repetibles y control de versiones del esquema | Media |
-| Alta | **Pruebas de integración** contra una rama de Neon de pruebas | Valida SQL real, triggers y pool, no solo dobles | Media |
-| Media | **API versionada** (`/api/v1/...`) y documento **OpenAPI/Swagger** | Compatibilidad hacia atrás y documentación interactiva | Media |
-| Media | **Notificaciones al técnico asignado** y correos de cambio de estado al solicitante | Mejor comunicación con el usuario | Baja |
-| Media | **Adjuntos** (capturas de pantalla) con Google Drive o S3 | Diagnóstico más rápido de las fallas | Media |
-| Media | **Dashboard web** que consuma `GET /api/estadisticas` y `GET /api/solicitudes` con filtros en vivo | Independencia de Google Sheets y mejor experiencia | Alta |
-| Media | **Paginación por cursor** y búsqueda de texto completo con `tsvector` | Mejor rendimiento con miles de solicitudes | Media |
-| Media | **Manejo de reintentos y error workflow en n8n** con correo de resumen | Mayor tolerancia a fallas de red | Baja |
-| Baja | **Soft delete** y política de retención de datos | Cumplimiento de privacidad y limpieza | Media |
-| Baja | **Métricas y monitoreo** (Sentry, UptimeRobot, alertas de errores) | Detección temprana de fallas | Baja |
-| Baja | **Internacionalización** de mensajes (español/inglés) | Reutilización en otros contextos | Baja |
-| Baja | **Accesibilidad del formulario** (etiquetas, contraste, ayudas) | Inclusión de todos los usuarios | Baja |
-| Baja | **CI/CD** con GitHub Actions (pruebas automáticas en cada push) | Calidad continua del repositorio | Media |
-| Baja | **Contraseñas/llaves con rotación programada** y varias API keys por cliente | Menor impacto de una filtración | Media |
-
----
-
-## 11. Referencias
-
-1. Pallets Projects. *Flask Documentation*. <https://flask.palletsprojects.com/>
-2. Pallets Projects. *Flask-CORS Documentation*. <https://flask-cors.readthedocs.io/>
-3. Benoit Chesneau. *Gunicorn Documentation*. <https://docs.gunicorn.org/>
-4. Psycopg. *psycopg2 Documentation*. <https://www.psycopg.org/docs/>
-5. PostgreSQL Global Development Group. *PostgreSQL Documentation* (triggers, secuencias, restricciones). <https://www.postgresql.org/docs/>
-6. Neon Inc. *Neon Documentation: Get started*. <https://neon.com/docs/get-started/set-up-your-project>
-7. Neon Inc. *Connect to Neon securely*. <https://neon.com/docs/connect/connect-securely>
-8. Neon Inc. *Connection pooling*. <https://neon.com/docs/connect/connection-pooling>
-9. Render Services. *Deploy a Flask App on Render*. <https://render.com/docs/deploy-flask>
-10. Render Services. *Free instances (plan Free)*. <https://render.com/docs/free>
-11. Render Services. *Environment variables and secrets*. <https://render.com/docs/configure-environment-variables>
-12. Render Services. *Health checks*. <https://render.com/docs/health-checks>
-13. Render Services. *Infrastructure as code (render.yaml / Blueprints)*. <https://render.com/docs/infrastructure-as-code>
-14. n8n GmbH. *n8n Documentation*. <https://docs.n8n.io/>
-15. n8n GmbH. *Google credentials in n8n*. <https://docs.n8n.io/integrations/builtin/credentials/google/>
-16. n8n GmbH. *Google Sheets node*. <https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.googlesheets/>
-17. n8n GmbH. *Gmail node*. <https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.gmail/>
-18. Google. *Google Forms: crea un formulario y vincúlalo a Hojas de cálculo*. <https://support.google.com/docs/answer/6281888>
-19. Google. *Google Sheets API Documentation*. <https://developers.google.com/sheets/api>
-20. Google. *Gmail API Documentation*. <https://developers.google.com/gmail/api>
-21. Google. *OAuth 2.0 Documentation*. <https://developers.google.com/identity/protocols/oauth2>
-22. Python Software Foundation. *unittest — Unit testing framework*. <https://docs.python.org/3/library/unittest.html>
-23. GitHub. *GitHub Docs: crear un repositorio y hacer push*. <https://docs.github.com/es/get-started>
-24. Documentación del proyecto: `README.md`, `docs/guia-despliegue-render-neon.md`, `docs/guia-google-forms-sheets.md`, `docs/pruebas-api.md`.
-
----
-
-## 12. Apéndices
-
-### Apéndice A. Estructura del repositorio
-
-```text
-proyecto-solicitudes/
-├── README.md                      Descripción general y ejecución local
-├── render.yaml                    Blueprint de Render (raíz del repositorio)
-├── .gitignore                     Exclusiones (.env, .deps, __pycache__, .venv)
-├── backend/
-│   ├── app.py                     Endpoints Flask y manejo de errores
-│   ├── database.py                Pool de conexiones, SQL y traducción de errores
-│   ├── utilidades.py              Validación y normalización de datos
-│   ├── requirements.txt           Dependencias con versiones fijas
-│   ├── .env.example               Plantilla de variables de entorno
-│   ├── .python-version            3.12.6
-│   └── test_smoke.py              34 pruebas de humo
-├── database/
-│   ├── schema.sql                 Tabla, secuencia, triggers, índices y vistas
-│   └── datos_prueba.sql           10 solicitudes de demostración
-├── n8n/
-│   └── workflow-solicitudes.json  Workflow importable en n8n
-└── docs/
-    ├── documentacion-tecnica.md       Este documento
-    ├── guia-despliegue-render-neon.md Guía de despliegue paso a paso
-    ├── guia-google-forms-sheets.md    Guía de Forms, Sheets y dashboard
-    └── pruebas-api.md                 Evidencias y pruebas con curl/PowerShell
-```
-
-### Apéndice B. Variables de entorno
-
-| Variable | Obligatoria | Ejemplo | Descripción |
-|---|---|---|---|
-| `DATABASE_URL` | Sí | `postgresql://neondb_owner:clave@ep-xxxx-pooler.us-west-2.aws.neon.tech/neondb?sslmode=require` | Cadena de conexión a Neon (formato pooled). La API normaliza `postgres://` y agrega `sslmode=require` si falta. |
-| `API_KEY` | Sí en producción | `sH7v2QpR9wXkLm3nT8cYbJ5fD1gA0eZu6iK4oN2rM8s` | Llave del header `X-API-Key`. Si está vacía, `POST`/`PATCH` quedan abiertos. |
-| `ADMIN_EMAIL` | No | `soporte@escuela.mx` | Correo del administrador para avisos del workflow. |
-| `PORT` | No | `10000` (Render) / `5000` (local) | Puerto del servidor; Render la inyecta automáticamente. |
-| `FLASK_DEBUG` | No | `false` | Activa el modo depuración de Flask; nunca en producción. |
-| `CORS_ORIGINS` | No | `*` o `https://midominio.com` | Orígenes permitidos por Flask-CORS. |
-
-### Apéndice C. Esquema SQL completo (`database/schema.sql`)
-
-```sql
--- ============================================================================
---  SISTEMA AUTOMATIZADO DE GESTIÓN DE SOLICITUDES DE SOPORTE TÉCNICO
---  Base de datos: PostgreSQL (Neon)          Versión del esquema: 1.0.0
---  Archivo: database/schema.sql
--- ----------------------------------------------------------------------------
---  CÓMO EJECUTARLO
---    1. Entra a https://console.neon.tech y abre tu proyecto.
---    2. Menú izquierdo -> "SQL Editor".
---    3. Pega TODO el contenido de este archivo y presiona "Run".
---
---    Alternativa por terminal (psql):
---      psql "postgresql://usuario:clave@host/neondb?sslmode=require" -f database/schema.sql
---
---  El script es IDEMPOTENTE: puedes ejecutarlo varias veces sin perder datos.
---  Para reiniciar todo desde cero (borra las solicitudes), descomenta el bloque
---  "RESET OPCIONAL" que está justo debajo.
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- RESET OPCIONAL (borra todos los datos; úsalo solo si quieres empezar de cero)
--- ----------------------------------------------------------------------------
--- DROP VIEW  IF EXISTS v_estadisticas_por_estado;
--- DROP VIEW  IF EXISTS v_estadisticas_por_prioridad;
--- DROP VIEW  IF EXISTS v_estadisticas_por_categoria;
--- DROP TABLE IF EXISTS solicitudes CASCADE;
--- DROP SEQUENCE IF EXISTS solicitudes_folio_seq;
-
--- ----------------------------------------------------------------------------
--- 1) SECUENCIA PARA GENERAR LOS FOLIOS CONSECUTIVOS
--- ----------------------------------------------------------------------------
-CREATE SEQUENCE IF NOT EXISTS solicitudes_folio_seq
-    START WITH 1
-    INCREMENT BY 1
-    MINVALUE 1
-    NO MAXVALUE
-    CACHE 1;
-
--- ----------------------------------------------------------------------------
--- 2) TABLA PRINCIPAL: solicitudes
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS solicitudes (
-    id                  BIGSERIAL PRIMARY KEY,
-    folio               VARCHAR(20)  NOT NULL UNIQUE,
-    nombre              VARCHAR(120) NOT NULL,
-    correo              VARCHAR(120) NOT NULL,
-    telefono            VARCHAR(20),
-    area                VARCHAR(100),
-    categoria           VARCHAR(50)  NOT NULL,
-    prioridad           VARCHAR(20)  NOT NULL,
-    descripcion         TEXT         NOT NULL,
-    estado              VARCHAR(20)  NOT NULL DEFAULT 'Pendiente',
-    notas               TEXT,
-    id_externo          VARCHAR(120) UNIQUE,
-    correo_enviado      BOOLEAN      NOT NULL DEFAULT FALSE,
-    fecha_registro      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    fecha_actualizacion TIMESTAMPTZ,
-
-    CONSTRAINT chk_categoria CHECK (
-        categoria IN ('Hardware', 'Software', 'Redes e Internet',
-                      'Accesos y contraseñas', 'Impresoras', 'Otro')
-    ),
-    CONSTRAINT chk_prioridad CHECK (
-        prioridad IN ('Baja', 'Media', 'Alta', 'Crítica')
-    ),
-    CONSTRAINT chk_estado CHECK (
-        estado IN ('Pendiente', 'En proceso', 'Resuelto', 'Cerrado')
-    ),
-    CONSTRAINT chk_correo CHECK (
-        correo ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
-    ),
-    CONSTRAINT chk_nombre CHECK (length(btrim(nombre)) >= 3),
-    CONSTRAINT chk_descripcion CHECK (length(btrim(descripcion)) >= 10)
-);
-
--- Documentación de la tabla (aparece en el catálogo de PostgreSQL)
-COMMENT ON TABLE  solicitudes IS
-    'Solicitudes de soporte técnico capturadas con Google Forms y registradas por la API REST.';
-COMMENT ON COLUMN solicitudes.folio IS
-    'Folio único generado por trigger: SOL-AAAA-NNNN (ej. SOL-2026-0001).';
-COMMENT ON COLUMN solicitudes.id_externo IS
-    'Identificador de la respuesta del formulario; evita registrar dos veces la misma solicitud (idempotencia).';
-COMMENT ON COLUMN solicitudes.correo_enviado IS
-    'Bandera informativa: TRUE cuando n8n ya envió la notificación por Gmail.';
-
--- ----------------------------------------------------------------------------
--- 3) TRIGGER: GENERACIÓN AUTOMÁTICA DEL FOLIO
---    Se ejecuta ANTES de insertar. Si la fila no trae folio, lo construye con
---    el año actual y el siguiente número de la secuencia:
---        SOL-2026-0001, SOL-2026-0002, ...
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION asignar_folio() RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.folio IS NULL OR btrim(NEW.folio) = '' THEN
-        NEW.folio := 'SOL-' || to_char(COALESCE(NEW.fecha_registro, NOW()), 'YYYY')
-                     || '-' || lpad(nextval('solicitudes_folio_seq')::text, 4, '0');
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_asignar_folio ON solicitudes;
-CREATE TRIGGER trg_asignar_folio
-    BEFORE INSERT ON solicitudes
-    FOR EACH ROW
-    EXECUTE FUNCTION asignar_folio();
-
--- ----------------------------------------------------------------------------
--- 4) TRIGGER: FECHA DE ACTUALIZACIÓN AUTOMÁTICA
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION actualizar_fecha_actualizacion() RETURNS TRIGGER AS $$
-BEGIN
-    NEW.fecha_actualizacion := NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_actualizar_fecha ON solicitudes;
-CREATE TRIGGER trg_actualizar_fecha
-    BEFORE UPDATE ON solicitudes
-    FOR EACH ROW
-    EXECUTE FUNCTION actualizar_fecha_actualizacion();
-
--- ----------------------------------------------------------------------------
--- 5) ÍNDICES (aceleran los filtros de la API y las consultas del dashboard)
--- ----------------------------------------------------------------------------
-CREATE INDEX IF NOT EXISTS idx_solicitudes_categoria      ON solicitudes (categoria);
-CREATE INDEX IF NOT EXISTS idx_solicitudes_prioridad      ON solicitudes (prioridad);
-CREATE INDEX IF NOT EXISTS idx_solicitudes_estado         ON solicitudes (estado);
-CREATE INDEX IF NOT EXISTS idx_solicitudes_fecha_registro ON solicitudes (fecha_registro DESC);
-
--- ----------------------------------------------------------------------------
--- 6) VISTAS DE ESTADÍSTICAS (listas para usarse desde Neon o para comprobar
---    que los números coinciden con el dashboard de Google Sheets)
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE VIEW v_estadisticas_por_categoria AS
-SELECT categoria,
-       COUNT(*)                                                          AS total,
-       ROUND(100.0 * COUNT(*) / NULLIF((SELECT COUNT(*) FROM solicitudes), 0), 2) AS porcentaje
-FROM solicitudes
-GROUP BY categoria
-ORDER BY total DESC, categoria;
-
-CREATE OR REPLACE VIEW v_estadisticas_por_prioridad AS
-SELECT prioridad,
-       COUNT(*)                                                          AS total,
-       ROUND(100.0 * COUNT(*) / NULLIF((SELECT COUNT(*) FROM solicitudes), 0), 2) AS porcentaje
-FROM solicitudes
-GROUP BY prioridad
-ORDER BY total DESC, prioridad;
-
-CREATE OR REPLACE VIEW v_estadisticas_por_estado AS
-SELECT estado,
-       COUNT(*)                                                          AS total,
-       ROUND(100.0 * COUNT(*) / NULLIF((SELECT COUNT(*) FROM solicitudes), 0), 2) AS porcentaje
-FROM solicitudes
-GROUP BY estado
-ORDER BY total DESC, estado;
-
--- ----------------------------------------------------------------------------
--- 7) VERIFICACIÓN RÁPIDA (debe regresar 0 en una base recién creada)
--- ----------------------------------------------------------------------------
-SELECT COUNT(*) AS solicitudes_registradas FROM solicitudes;
-```
-
-### Apéndice D. Glosario
-
-| Término | Definición |
-|---|---|
-| **API REST** | Interfaz HTTP que expone recursos (solicitudes) mediante métodos (`GET`, `POST`, `PATCH`) y representaciones JSON. |
-| **Endpoint** | Ruta de la API que atiende una operación, por ejemplo `POST /api/solicitudes`. |
-| **Folio** | Identificador legible y único de una solicitud, con formato `SOL-AAAA-NNNN`. |
-| **Trigger (base de datos)** | Función PL/pgSQL que se ejecuta automáticamente `BEFORE INSERT` o `BEFORE UPDATE` sobre una tabla. |
-| **Secuencia** | Objeto de PostgreSQL que entrega números consecutivos de forma atómica (`nextval`). |
-| **Idempotencia** | Propiedad por la que repetir la misma petición no produce efectos adicionales (aquí, no duplica solicitudes). |
-| **Pool de conexiones** | Conjunto de conexiones reutilizables a la base de datos para evitar abrir/cerrar una conexión por petición. |
-| **PgBouncer / conexión pooled** | Componente de Neon que multiplexa conexiones; se usa el host con `-pooler` para la API. |
-| **TLS / SSL** | Cifrado del transporte; Neon exige `sslmode=require` en la conexión. |
-| **CORS** | Mecanismo del navegador que restringe peticiones entre orígenes distintos. |
-| **OAuth 2.0** | Protocolo de autorización delegada; n8n lo usa para acceder a Google Sheets y Gmail sin guardar contraseñas. |
-| **Cold start** | Demora del primer request cuando un servicio en plan gratuito estaba suspendido. |
-| **WSGI** | Interfaz estándar entre un servidor web (Gunicorn) y una aplicación Python (Flask). |
-| **Health check** | Petición periódica que un proveedor hace a la app para saber si está viva (`/health`). |
-| **Webhook / polling** | Mecanismos de integración: Google Forms no se usa por webhook; n8n consulta la hoja (polling) cada minuto. |
-| **Idempotencia `ON CONFLICT`** | Cláusula de PostgreSQL que evita insertar una fila si el valor único ya existe. |
-| **TIMESTAMPTZ** | Tipo de PostgreSQL que guarda fecha y hora con zona horaria (UTC internamente). |
-
-### Apéndice E. Documentos relacionados
-
-| Documento | Contenido |
-|---|---|
-| `README.md` | Descripción general, arquitectura resumida, URLs públicas y ejecución local. |
-| `docs/guia-despliegue-render-neon.md` | Fases de despliegue (Neon, GitHub, Render, Google Cloud/OAuth, n8n) y solución de problemas. |
-| `docs/guia-google-forms-sheets.md` | Estructura del formulario, columnas de la hoja, fórmulas y gráficas del dashboard. |
-| `docs/pruebas-api.md` | Pruebas con curl/PowerShell, resultados esperados y checklist de evidencias. |
-
----
-
-**Fin de la documentación técnica.** Para consultas sobre el despliegue, revisa `docs/guia-despliegue-render-neon.md`; para el formulario y el dashboard, `docs/guia-google-forms-sheets.md`; para las pruebas, `docs/pruebas-api.md`.
-
----
-
 # Anexo D — Dashboard en Google Sheets (requisito 7)
 
 El dashboard se implementa en la pestaña **`Dashboard`** de la misma hoja de cálculo
@@ -1536,33 +1234,7 @@ Adicionalmente se aplica formato condicional a la columna de prioridad para resa
 
 ---
 
-# Anexo E — Evidencias del funcionamiento
-
-Las capturas se almacenan en la carpeta `docs/capturas/` del repositorio.
-
-| # | Evidencia | Archivo sugerido |
-|---|---|---|
-| 1 | Base de datos en Neon con la tabla `solicitudes` y folios | `01-neon-tabla-solicitudes.png` |
-| 2 | Consulta SQL con los registros y las vistas de estadísticas | `02-neon-consultas.png` |
-| 3 | Servicio de la API en Render en estado **Live** | `03-render-servicio-live.png` |
-| 4 | `GET /health` con `"base_datos": "conectada"` | `04-health-conectada.png` |
-| 5 | `GET /` (índice de endpoints) | `05-api-indice.png` |
-| 6 | Pruebas de la API ejecutadas (todas en verde) | `06-pruebas-api.png` |
-| 7 | Google Forms con las 8 preguntas | `07-google-form.png` |
-| 8 | Hoja de respuestas con las columnas A–M y folios escritos por n8n | `08-hoja-respuestas-folios.png` |
-| 9 | Workflow de n8n completo en el editor | `09-n8n-workflow.png` |
-| 10 | Ejecución exitosa de n8n con los nodos en verde | `10-n8n-ejecucion-exitosa.png` |
-| 11 | Correo de notificación recibido con el folio | `11-gmail-folio.png` |
-| 12 | Dashboard con indicadores y las 3 gráficas | `12-dashboard.png` |
-| 13 | Repositorio en GitHub con el proyecto | `13-github-repo.png` |
-| 14 | Servicio publicado en el panel de Render | `14-render-deploys.png` |
-
-Con estas evidencias queda demostrado el flujo completo:
-**Google Forms → Google Sheets → n8n → API Flask en Render → PostgreSQL en Neon → Gmail → dashboard**.
-
----
-
-# Anexo F — Evidencias fotográficas
+# Anexo E — Evidencias fotográficas
 
 Las siguientes capturas muestran el sistema en funcionamiento y corresponden a la entrega final del proyecto.
 
@@ -1618,3 +1290,4 @@ Las siguientes capturas muestran el sistema en funcionamiento y corresponden a l
   <img src="diagrama-workflow-n8n.png" alt="Diagrama del workflow de n8n">
   <figcaption><strong>Figura 13.</strong> Diagrama del workflow de n8n: disparador de Google Sheets, normalización, llamada a la API, envío de correo y escritura del folio en la hoja.</figcaption>
 </figure>
+
