@@ -10,6 +10,24 @@
 
 ---
 
+---
+
+## Estado actual del despliegue (producción)
+
+| Recurso | Valor |
+|---|---|
+| API en Render | https://api-solicitudes-trampas23.onrender.com |
+| Repositorio GitHub | https://github.com/Trampas23/proyecto-solicitudes-soporte |
+| Base de datos | Neon, proyecto `solicitudes-soporte` (rama `producción`, AWS Oregón) |
+| n8n | Autoalojado con Docker, versión **2.43.5** (`http://localhost:5678`) |
+| Hoja de respuestas | `Respuestas de formulario 1` (ID `11lL2PZLu_mbpvVsRF75-e-k0BnSDOUnFpjxcvIwDf9w`) |
+| Dashboard | Pestaña `Dashboard` de la misma hoja |
+| Estado del flujo | ✅ Publicado: Formulario → Hoja → n8n → API → Neon → Gmail → folio en la hoja |
+
+> ⚠️ El workflow de n8n **debe estar ejecutándose** (contenedor Docker encendido) para
+> procesar las respuestas nuevas. Las capturas de evidencia se guardan en `docs/capturas/`.
+
+
 ## Índice
 
 1. [Lo que vas a entregar](#1-lo-que-vas-a-entregar)

@@ -7,7 +7,9 @@
 | **Título del documento** | Documentación técnica del sistema |
 | **Materia** | Programación en ambiente cliente servidor |
 | **Proyecto** | Sistema automatizado de gestión de solicitudes de soporte técnico (segundo parcial) |
-| **Autor** | Nombre del alumno |
+| **Autor** | Ailton Antonio |
+| **Matrícula** | [escribe tu matrícula] |
+| **Grupo** | [escribe tu grupo] |
 | **Profesor** | ______________________________ |
 | **Institución** | ______________________________ |
 | **Fecha** | Noviembre de 2026 |
@@ -20,7 +22,7 @@
 
 | Versión | Fecha | Autor | Cambios |
 |---|---|---|---|
-| 1.0 | Noviembre de 2026 | Nombre del alumno | Versión inicial: arquitectura, modelo de datos, referencia de API, seguridad, pruebas y conclusiones. |
+| 1.0 | Noviembre de 2026 | Ailton Antonio | Versión inicial: arquitectura, modelo de datos, referencia de API, seguridad, pruebas y conclusiones. |
 
 ---
 
@@ -54,7 +56,7 @@ El sistema atiende un problema cotidiano en una institución educativa: las soli
 5. n8n envía un correo de confirmación al solicitante con su folio y actualiza la hoja.
 6. Un **dashboard** construido en otra pestaña de la misma hoja muestra los indicadores de gestión.
 
-La API está implementada en **Python 3.12.6 + Flask 3.1.0**, se sirve con **Gunicorn 23.0.0** en **Render** (plan Free) y persiste en **PostgreSQL en Neon** (plan Free; versión 15 o superior, el proyecto usa la versión por defecto 17). La automatización se implementa con **n8n Cloud**. El documento está organizado para que cualquier integrante del equipo —o el profesor— pueda entender la arquitectura, reproducir el despliegue, consumir la API y validar el funcionamiento.
+La API está implementada en **Python 3.12.6 + Flask 3.1.0**, se sirve con **Gunicorn 23.0.0** en **Render** (plan Free) y persiste en **PostgreSQL en Neon** (plan Free; versión 15 o superior, el proyecto usa la versión por defecto 17). La automatización se implementa con **n8n autoalojado (Docker, v2.43.5)**. El documento está organizado para que cualquier integrante del equipo —o el profesor— pueda entender la arquitectura, reproducir el despliegue, consumir la API y validar el funcionamiento.
 
 > **Documentos complementarios:** `README.md` (descripción general y ejecución local), `docs/guia-despliegue-render-neon.md` (paso a paso de despliegue), `docs/guia-google-forms-sheets.md` (formulario, hoja y dashboard) y `docs/pruebas-api.md` (evidencias de pruebas con curl y PowerShell).
 
@@ -105,7 +107,7 @@ Diseñar, implementar y desplegar en la nube un sistema automatizado de gestión
 |---|---|---|
 | Front-end de captura | Google Forms | Servicio en la nube de Google |
 | Hoja de cálculo y dashboard | Google Sheets | Fórmulas, tablas y gráficas |
-| Orquestación | n8n Cloud | Workflow importable `n8n/workflow-solicitudes.json` (10 nodos + nota de configuración) |
+| Orquestación | n8n autoalojado (Docker, v2.43.5) | Workflow importable `n8n/workflow-solicitudes.json` (10 nodos + nota de configuración) |
 | Lenguaje | Python | 3.12.6 (`backend/.python-version`) |
 | Framework web | Flask | 3.1.0 |
 | CORS | Flask-CORS | 5.0.0 |
@@ -128,7 +130,7 @@ Diseñar, implementar y desplegar en la nube un sistema automatizado de gestión
 | L4 | Sin auditoría detallada de cambios | No hay historial de quién cambió el estado | Tabla `historial_estados` o `auditoria` |
 | L5 | Plan Free de Render | El servicio se duerme tras ~15 min y el primer request tarda 50 s o más | Aceptado en el proyecto; se documenta el cold start y el timeout de n8n a 90 s |
 | L6 | Plan Free de Neon | Suspensión de cómputo por inactividad y límites de almacenamiento/conexiones | Conexión *pooled*, pool de 1 a 8 conexiones y reconexión automática |
-| L7 | n8n Cloud en periodo de prueba | La prueba dura 14 días; después requiere plan de pago o n8n autoalojado | Exportar el workflow y documentar la alternativa con Docker |
+| L7 | n8n autoalojado (Docker) | El flujo solo procesa respuestas mientras el contenedor de n8n está encendido; no es un servicio 24/7 | Mantener el contenedor activo durante la demostración y documentar el arranque con Docker |
 | L8 | Sin adjuntos ni archivos | El formulario solo captura texto | Integrar almacenamiento de objetos (S3/Drive) en una versión futura |
 | L9 | Sin migraciones automáticas | El esquema se ejecuta a mano en el SQL Editor de Neon | Adoptar Alembic o un runner de migraciones |
 | L10 | Pruebas automatizadas con dobles de prueba | No validan la conexión real a Neon ni el workflow de n8n | Agregar pruebas de integración contra una rama de Neon de pruebas |
@@ -151,7 +153,7 @@ flowchart TB
         DASH["Google Sheets · pestaña Dashboard<br/>tablas y gráficas"]
     end
 
-    subgraph N8N["n8n Cloud · workflow-solicitudes.json"]
+    subgraph N8N["n8n autoalojado (Docker, v2.43.5) · workflow-solicitudes.json"]
         TRIG["Google Sheets Trigger<br/>Row Added · revisa cada minuto"]
         NORM["Normalizar fila · Code"]
         HTTP["Registrar en API · HTTP Request"]
@@ -200,7 +202,7 @@ flowchart TB
 | Formulario de captura | Google Forms | Recibe los datos del solicitante y valida campos obligatorios | Google Workspace | Formulario compartido (`forms.gle/...`) |
 | Hoja de respuestas | Google Sheets | Almacena una fila por respuesta del formulario | Google Workspace | Hoja de cálculo `<SPREADSHEET_ID>` |
 | Dashboard | Google Sheets | Totales y gráficas por categoría, prioridad y estado | Pestaña de la misma hoja | Fórmulas y gráficas de la hoja |
-| Orquestador | n8n Cloud | Detecta filas nuevas (Google Sheets Trigger), normaliza (Normalizar fila), llama a la API (Registrar en API), envía correos y actualiza la hoja | n8n Cloud | `n8n/workflow-solicitudes.json` |
+| Orquestador | n8n autoalojado (Docker, v2.43.5) | Detecta filas nuevas (Google Sheets Trigger), normaliza (Normalizar fila), llama a la API (Registrar en API), envía correos y actualiza la hoja | n8n autoalojado (Docker, v2.43.5) | `n8n/workflow-solicitudes.json` |
 | API REST | Flask 3.1.0 + Flask-CORS | Expone los endpoints, valida, autoriza y serializa JSON | Render | `backend/app.py` |
 | Autenticación | Decorador `requiere_api_key` | Verifica el header `X-API-Key` con `secrets.compare_digest` | Render | `backend/app.py`, variable `API_KEY` |
 | Validación y normalización | Módulo `utilidades.py` | Valida longitudes, correo, teléfono; normaliza categorías, prioridades y estados | Render | `backend/utilidades.py` |
@@ -208,7 +210,7 @@ flowchart TB
 | Servidor WSGI | Gunicorn 23.0.0 | Sirve la aplicación Flask en `0.0.0.0:$PORT` con 2 workers | Render | `render.yaml` |
 | Base de datos | PostgreSQL (Neon; 15+) | Persiste solicitudes, genera folios, mantiene índices y vistas | Neon (AWS us-west-2) | `database/schema.sql` |
 | Datos de demostración | SQL | 10 solicitudes de ejemplo para el dashboard | Neon | `database/datos_prueba.sql` |
-| Correo saliente | Gmail API (OAuth 2.0) | Notifica al solicitante y al administrador | n8n Cloud / Google | Credenciales OAuth en n8n |
+| Correo saliente | Gmail API (OAuth 2.0) | Notifica al solicitante y al administrador | n8n / Google | Credenciales OAuth en n8n |
 | Pruebas | unittest + `test_client` | 34 pruebas de humo sin base de datos | Local | `backend/test_smoke.py` |
 | Documentación | Markdown | README y guías | GitHub | `docs/` |
 
@@ -1479,3 +1481,78 @@ SELECT COUNT(*) AS solicitudes_registradas FROM solicitudes;
 ---
 
 **Fin de la documentación técnica.** Para consultas sobre el despliegue, revisa `docs/guia-despliegue-render-neon.md`; para el formulario y el dashboard, `docs/guia-google-forms-sheets.md`; para las pruebas, `docs/pruebas-api.md`.
+
+---
+
+# Anexo D — Dashboard en Google Sheets (requisito 7)
+
+El dashboard se implementa en la pestaña **`Dashboard`** de la misma hoja de cálculo
+(`Respuestas de formulario 1`), leyendo directamente las respuestas capturadas por
+Google Forms y las columnas que escribe n8n (`Folio`, `Estado`, `Fecha de registro`,
+`Correo enviado`).
+
+## D.1 Indicadores y fórmulas
+
+| Indicador | Celda | Fórmula |
+|---|---|---|
+| Total de solicitudes | B4 | `=CONTARA('Respuestas de formulario 1'!A2:A)` |
+| Pendientes | B5 | `=CONTAR.SI('Respuestas de formulario 1'!K2:K;"Pendiente")` |
+| En proceso | B6 | `=CONTAR.SI('Respuestas de formulario 1'!K2:K;"En proceso")` |
+| Resueltas | B7 | `=CONTAR.SI('Respuestas de formulario 1'!K2:K;"Resuelto")` |
+| Folios generados | B8 | `=CONTARA('Respuestas de formulario 1'!J2:J)` |
+| Correos enviados | B9 | `=CONTAR.SI('Respuestas de formulario 1'!M2:M;"Si")` |
+
+## D.2 Solicitudes por categoría (columna F de la hoja)
+
+| Categoría | Fórmula |
+|---|---|
+| Hardware | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Hardware")` |
+| Software | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Software")` |
+| Redes e Internet | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Redes e Internet")` |
+| Accesos y contraseñas | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Accesos y contraseñas")` |
+| Impresoras | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Impresoras")` |
+| Otro | `=CONTAR.SI('Respuestas de formulario 1'!F2:F;"Otro")` |
+
+## D.3 Solicitudes por prioridad (columna G de la hoja)
+
+| Prioridad | Fórmula |
+|---|---|
+| Baja | `=CONTAR.SI('Respuestas de formulario 1'!G2:G;"Baja")` |
+| Media | `=CONTAR.SI('Respuestas de formulario 1'!G2:G;"Media")` |
+| Alta | `=CONTAR.SI('Respuestas de formulario 1'!G2:G;"Alta")` |
+| Crítica | `=CONTAR.SI('Respuestas de formulario 1'!G2:G;"Crítica")` |
+
+## D.4 Gráficas insertadas
+
+1. **Solicitudes por categoría** — gráfico de **barras** sobre la tabla D3:E9.
+2. **Solicitudes por prioridad** — gráfico **circular** sobre la tabla G3:H7.
+3. **Resumen de atención** — gráfico de **columnas** sobre los indicadores A4:B9.
+
+Adicionalmente se aplica formato condicional a la columna de prioridad para resaltar
+`Crítica` (rojo) y `Alta` (amarillo).
+
+---
+
+# Anexo E — Evidencias del funcionamiento
+
+Las capturas se almacenan en la carpeta `docs/capturas/` del repositorio.
+
+| # | Evidencia | Archivo sugerido |
+|---|---|---|
+| 1 | Base de datos en Neon con la tabla `solicitudes` y folios | `01-neon-tabla-solicitudes.png` |
+| 2 | Consulta SQL con los registros y las vistas de estadísticas | `02-neon-consultas.png` |
+| 3 | Servicio de la API en Render en estado **Live** | `03-render-servicio-live.png` |
+| 4 | `GET /health` con `"base_datos": "conectada"` | `04-health-conectada.png` |
+| 5 | `GET /` (índice de endpoints) | `05-api-indice.png` |
+| 6 | Pruebas de la API ejecutadas (todas en verde) | `06-pruebas-api.png` |
+| 7 | Google Forms con las 8 preguntas | `07-google-form.png` |
+| 8 | Hoja de respuestas con las columnas A–M y folios escritos por n8n | `08-hoja-respuestas-folios.png` |
+| 9 | Workflow de n8n completo en el editor | `09-n8n-workflow.png` |
+| 10 | Ejecución exitosa de n8n con los nodos en verde | `10-n8n-ejecucion-exitosa.png` |
+| 11 | Correo de notificación recibido con el folio | `11-gmail-folio.png` |
+| 12 | Dashboard con indicadores y las 3 gráficas | `12-dashboard.png` |
+| 13 | Repositorio en GitHub con el proyecto | `13-github-repo.png` |
+| 14 | Servicio publicado en el panel de Render | `14-render-deploys.png` |
+
+Con estas evidencias queda demostrado el flujo completo:
+**Google Forms → Google Sheets → n8n → API Flask en Render → PostgreSQL en Neon → Gmail → dashboard**.
