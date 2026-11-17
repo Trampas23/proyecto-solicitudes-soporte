@@ -30,8 +30,8 @@
 
 1. [Introducción](#1-introducción)
 2. [Objetivos](#2-objetivos)
-3. [Conclusiones](#3-conclusiones)
-4. [Anexo A — Evidencias fotográficas](#anexo-a--evidencias-fotográficas)
+3. [Desarrollo](#3-desarrollo)
+4. [Conclusiones](#4-conclusiones)
 
 ---
 
@@ -72,23 +72,15 @@ Diseñar, implementar y desplegar en la nube un sistema automatizado de gestión
 
 ---
 
-## 3. Conclusiones
-
-El proyecto cumplió el objetivo de automatizar el ciclo completo de una solicitud de soporte técnico con un modelo cliente-servidor real:
-
-1. **Se implementó una API REST propia y desplegada en la nube.** Flask + Gunicorn sobre Render, con PostgreSQL administrado en Neon, health check, manejo uniforme de errores y configuración reproducible mediante `render.yaml`. La API no solo almacena: valida, normaliza, autentica y traduce errores técnicos a mensajes en español.
-2. **El folio se resolvió en el lugar correcto.** Generarlo con una secuencia y un trigger de PostgreSQL garantiza unicidad y orden incluso con inserciones concurrentes o reintentos; es un ejemplo práctico de por qué las reglas de integridad pertenecen también a la base de datos y no solo a la aplicación.
-3. **La automatización eliminó el trabajo manual.** n8n detecta la respuesta del formulario, registra la solicitud, notifica al solicitante y actualiza la hoja sin intervención humana; la rama de error avisa al administrador cuando algo falla, y la idempotencia por `id_externo` evita duplicados en los reintentos.
-4. **La separación por capas facilitó el desarrollo y las pruebas.** `app.py` (endpoints), `utilidades.py` (validación) y `database.py` (persistencia) permitieron probar la lógica sin base de datos: las 34 pruebas de humo se ejecutan en segundos y cubren los códigos HTTP, la autenticación y el formato de las respuestas.
-5. **El dashboard en Google Sheets demostró que una herramienta cotidiana puede convertirse en un tablero de gestión** cuando los datos llegan ordenados y consistentes desde la API.
-6. **Los servicios gratuitos tienen límites que el diseño debe asumir:** cold start de hasta un minuto en Render, suspensión del cómputo de Neon, prueba de 14 días de n8n y tokens OAuth de 7 días en modo prueba. Documentarlos y ajustar los timeouts del workflow fue parte del trabajo profesional, no un accidente.
-7. **La principal deuda técnica es la seguridad de las lecturas:** los `GET` son públicos y la API key es única y compartida. El siguiente paso natural es agregar autenticación de usuarios, roles y auditoría, que quedan como trabajo futuro.
-
-En conjunto, el sistema demuestra un flujo completo *formulario → automatización → API → base de datos → notificación → tablero*, con documentación reproducible y evidencia de pruebas, que es exactamente el tipo de integración que la materia busca: un cliente (Google/n8n) consumiendo un servicio propio (Flask) que persiste en una base de datos relacional (PostgreSQL).
-
 ---
 
-# Anexo A — Evidencias fotográficas
+## 3. Desarrollo
+
+El sistema se desarrolló en las siguientes etapas: diseño de la base de datos en PostgreSQL (Neon), implementación de la API REST en Flask y su despliegue en Render, creación del formulario de captura en Google Forms vinculado a una hoja de respuestas, automatización del flujo con n8n, generación automática de folios con notificación por Gmail y construcción del dashboard de seguimiento.
+
+Las capturas siguientes documentan cada etapa y el funcionamiento del sistema de punta a punta.
+
+### Evidencias
 
 Las siguientes capturas muestran el sistema en funcionamiento y corresponden a la entrega final del proyecto.
 
@@ -145,4 +137,18 @@ Las siguientes capturas muestran el sistema en funcionamiento y corresponden a l
   <figcaption><strong>Figura 13.</strong> Diagrama del workflow de n8n: disparador de Google Sheets, normalización, llamada a la API, envío de correo y escritura del folio en la hoja.</figcaption>
 </figure>
 
+---
 
+## 4. Conclusiones
+
+El proyecto cumplió el objetivo de automatizar el ciclo completo de una solicitud de soporte técnico con un modelo cliente-servidor real:
+
+1. **Se implementó una API REST propia y desplegada en la nube.** Flask + Gunicorn sobre Render, con PostgreSQL administrado en Neon, health check, manejo uniforme de errores y configuración reproducible mediante `render.yaml`. La API no solo almacena: valida, normaliza, autentica y traduce errores técnicos a mensajes en español.
+2. **El folio se resolvió en el lugar correcto.** Generarlo con una secuencia y un trigger de PostgreSQL garantiza unicidad y orden incluso con inserciones concurrentes o reintentos; es un ejemplo práctico de por qué las reglas de integridad pertenecen también a la base de datos y no solo a la aplicación.
+3. **La automatización eliminó el trabajo manual.** n8n detecta la respuesta del formulario, registra la solicitud, notifica al solicitante y actualiza la hoja sin intervención humana; la rama de error avisa al administrador cuando algo falla, y la idempotencia por `id_externo` evita duplicados en los reintentos.
+4. **La separación por capas facilitó el desarrollo y las pruebas.** `app.py` (endpoints), `utilidades.py` (validación) y `database.py` (persistencia) permitieron probar la lógica sin base de datos: las 34 pruebas de humo se ejecutan en segundos y cubren los códigos HTTP, la autenticación y el formato de las respuestas.
+5. **El dashboard en Google Sheets demostró que una herramienta cotidiana puede convertirse en un tablero de gestión** cuando los datos llegan ordenados y consistentes desde la API.
+6. **Los servicios gratuitos tienen límites que el diseño debe asumir:** cold start de hasta un minuto en Render, suspensión del cómputo de Neon, prueba de 14 días de n8n y tokens OAuth de 7 días en modo prueba. Documentarlos y ajustar los timeouts del workflow fue parte del trabajo profesional, no un accidente.
+7. **La principal deuda técnica es la seguridad de las lecturas:** los `GET` son públicos y la API key es única y compartida. El siguiente paso natural es agregar autenticación de usuarios, roles y auditoría, que quedan como trabajo futuro.
+
+En conjunto, el sistema demuestra un flujo completo *formulario → automatización → API → base de datos → notificación → tablero*, con documentación reproducible y evidencia de pruebas, que es exactamente el tipo de integración que la materia busca: un cliente (Google/n8n) consumiendo un servicio propio (Flask) que persiste en una base de datos relacional (PostgreSQL).
